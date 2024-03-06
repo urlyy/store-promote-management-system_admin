@@ -11,7 +11,7 @@ const Dashboard = () => {
     ];
 
     return (
-        <div className="flex-1">
+        <div className="">
             <BarChart data={data} />
             <LineChart data={data2} />
             <PieChart data={data3} />

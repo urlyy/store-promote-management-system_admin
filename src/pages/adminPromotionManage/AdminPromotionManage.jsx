@@ -4,12 +4,11 @@ import api from './api'
 import dateFormat from "../../utils/dateFormat";
 import Table from "../../components/Table";
 import Modal from '../../components/Modal'
-import { useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2'
 
-const PromotionManage = () => {
+
+const AdminPromotionManage = () => {
     const [promotions, setPromotions] = useState([]);
-    const navigate = useNavigate();
     const [pageNum, setPageNum] = useState(1);
     const [totalPage, setTotalPage] = useState(null);
     const [pageSize, setPageSize] = useState(null);
@@ -21,6 +20,7 @@ const PromotionManage = () => {
         setPageSize(res.pageSize);
         setPromotions(promotions.map((item, idx) => ({
             id: item.id,
+            merchantId: item.merchantId,
             text: item.text,
             imgs: item.imgs,
             createTime: item.createTime,
@@ -41,6 +41,7 @@ const PromotionManage = () => {
             <tr>
                 <th>序号</th>
                 <th>推广ID</th>
+                <th>商家ID</th>
                 <th>推广内容</th>
                 <th>创建时间</th>
                 <th>评论数</th>
@@ -51,30 +52,38 @@ const PromotionManage = () => {
         )
     }
 
-    const handleDelete = (idx) => {
+
+
+    const handlePass = (idx) => {
+        const p = promotions[idx];
         Swal.fire({
-            title: "你确定要删除吗?",
-            text: "删除后无法恢复",
-            icon: "warning",
+            title: "你确定要允许该推广上线吗吗?",
+            showDenyButton: true,
             showCancelButton: true,
-            confirmButtonColor: "#3085d6",
-            cancelButtonColor: "#d33",
-            confirmButtonText: "确定删除",
+            confirmButtonText: "审核通过",
+            denyButtonText: `审核不通过`,
             cancelButtonText: "取消"
         }).then((result) => {
-
+            /* Read more about isConfirmed, isDenied below */
             if (result.isConfirmed) {
-                const p = promotions[idx];
-                api.deletePromotion(p.id).then(res => {
+                api.passPromotion(p.id).then(res => {
                     if (res.success) {
-                        // setPromotions(prev => prev.map((item, index) => {
-                        //     if (index == idx) {
-                        //         item.isDeleted = true;
-                        //     }
-                        //     return item;
-                        // }))
-                        setPromotions(prev => prev.filter((item, index) => {
-                            return idx !== index;
+                        setPromotions(prev => prev.map((item, index) => {
+                            if (index == idx) {
+                                item.status = 1;
+                            }
+                            return item;
+                        }))
+                    }
+                })
+            } else if (result.isDenied) {
+                api.denyPromotion(p.id).then(res => {
+                    if (res.success) {
+                        setPromotions(prev => prev.map((item, index) => {
+                            if (index == idx) {
+                                item.status = 2;
+                            }
+                            return item;
                         }))
                     }
                 })
@@ -87,17 +96,16 @@ const PromotionManage = () => {
         return (
             <>
                 {showModal && <Modal onClose={setShowModal.bind(null, false)}>
-                    <div className="flex-col gap-2">
-                        <div>{datum.text}</div>
-                        <div>
-                            {datum.imgs.map((url, idx) => (<img key={idx} className='h-28 aspect-square' src={url}></img>))}
-                        </div>
+                    <div>{datum.text}</div>
+                    <div>
+                        {datum.imgs.map((url, idx) => (<img key={idx} className='h-28 aspect-square' src={url}></img>))}
                     </div>
 
                 </Modal>}
                 <tr key={idx} className="flex">
                     <Td>{pageSize * (pageNum - 1) + idx + 1}</Td>
                     <Td>{datum.id}</Td>
+                    <Td>{datum.merchantId}</Td>
                     <Td><button className="hover:text-blue-500" onClick={setShowModal.bind(null, true)}>查看内容</button></Td>
                     <Td>{dateFormat(datum.createTime)}</Td>
                     <Td>{datum.commentNum}</Td>
@@ -105,16 +113,17 @@ const PromotionManage = () => {
                     <Td>
                         <div className="flex-1 gap-1 justify-center">
                             {/* {datum.isTop ? <div className="bg-yellow-500 text-white p-1">置顶</ div> : <div className="bg-blue-400 text-white p-1">普通</div>} */}
-                            {datum.isDeleted == true && <div className="bg-slate-500 text-white p-1">已删除</div>}
-                            {datum.status == 0 && <div className="bg-red-500 text-white p-1">待审核</div>}
+                            {datum.isDeleted == 1 && <div className="bg-slate-500 text-white p-1">已删除</div>}
+                            {datum.status == 0 && <div className="bg-slate-500 text-white p-1">待审核</div>}
                             {datum.status == 1 && <div className="bg-green-500 text-white p-1">审核通过</div>}
-                            {datum.status == 2 && <div className="bg-slate-500 text-white p-1">审核不通过</div>}
+                            {datum.status == 2 && <div className="bg-red-500 text-white p-1">审核不通过</div>}
                         </div>
                     </Td>
                     <Td>
                         <div className="flex-1 gap-1 justify-center">
-                            <button onClick={() => { navigate(`/PromotionEdit?promotionId=${datum.id}`) }} className="p-1 border hover:text-white hover:bg-blue-400 rounded-md border-black text-lg">编辑推广</button>
-                            {datum.isDeleted == false && <button onClick={handleDelete.bind(null, idx)} className="p-1 border hover:text-white hover:bg-red-400 rounded-md border-black text-lg">删除</button>}
+                            <button onClick={handlePass.bind(null, idx)} className="p-1 border hover:text-white hover:bg-blue-400 rounded-md border-black text-lg">审核</button>
+                            {/* <button className="p-1 border hover:text-white hover:bg-blue-400 rounded-md border-black text-lg">置顶</button> */}
+                            {/* <button className="p-1 border hover:text-white hover:bg-red-400 rounded-md border-black text-lg">删除</button> */}
                         </div>
                     </Td>
                 </tr >
@@ -129,4 +138,4 @@ const PromotionManage = () => {
         </div>
     )
 }
-export default PromotionManage;
+export default AdminPromotionManage;

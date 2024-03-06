@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 
 const LoginFrom = ({ onChangeForm }) => {
     const navigate = useNavigate();
-
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const setUser = userStore(state => state.setUser);
@@ -16,12 +15,17 @@ const LoginFrom = ({ onChangeForm }) => {
             return;
         }
         const res = await api.login(username, password);
-        const user = res.user;
-        const token = res.token;
-        user.token = token;
-        localStorage.setItem("user", JSON.stringify(user));
-        setUser(user);
-        navigate("/");
+        if (res.success) {
+            const user = res.data.user;
+            const token = res.data.token;
+            user.token = token;
+            localStorage.setItem("user", JSON.stringify(user));
+            setUser(user);
+            navigate("/");
+        } else {
+            alert(res.message);
+        }
+
     }
     return (
         <div>
@@ -37,7 +41,7 @@ const LoginFrom = ({ onChangeForm }) => {
                 </div>
                 <div className='gap-1 justify-center'>
                     <button onClick={submit} className='text-xl p-1 text-white bg-primary300 hover:bg-primary200 rounded-md'>提交登录</button>
-                    <button onClick={(e) => { e.preventDefault(); onChangeForm('register') }} className='text-xl p-1 border text-white rounded-md bg-accent200 hover:bg-accent100 border-black' >前往注册</button>
+                    {/* <button onClick={(e) => { e.preventDefault(); onChangeForm('register') }} className='text-xl p-1 border text-white rounded-md bg-accent200 hover:bg-accent100 border-black' >前往注册</button> */}
                 </div>
             </form>
         </div>
@@ -84,7 +88,7 @@ const Entrance = () => {
     return (
         <div className='flex-1 justify-center'>
             {formTitle == "login" && <LoginFrom onChangeForm={handleChangeForm}></LoginFrom>}
-            {formTitle == "register" && <RegisterForm onChangeForm={handleChangeForm}></RegisterForm>}
+            {/* {formTitle == "register" && <RegisterForm onChangeForm={handleChangeForm}></RegisterForm>} */}
         </div>
     )
 }

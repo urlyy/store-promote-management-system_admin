@@ -1,15 +1,18 @@
 import { useNavigate, useRoutes, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Entrance from "../pages/Entrance/Entrance";
-import PromotionManage from "../pages/promotionManage/PromotionManage";
+import AdminPromotionManage from "../pages/adminPromotionManage/AdminPromotionManage";
 import UserManage from "../pages/userManage/UserManage";
 import PromotionCommentManage from '../pages/promotionCommentManage/PromotionCommentManage'
 import MerchantCommentManage from '../pages/merchantCommentManage/MerchantCommentManage';
 import MerchantManage from '../pages/merchantManage/MerchantManage'
-import MerchantHome from '../pages/merchantHome/MerchantHome'
+// import MerchantHome from '../pages/merchantHome/MerchantHome'
 import MerchantDataBoard from '../pages/merchantDataBoard/MerchantDataBoard';
+import PromotionManage from '../pages/promotionManage/PromotionManage'
+import PromotionEdit from '../pages/promotionEdit/PromotionEdit';
 
 import Dashboard from '../pages/dashboard/Dashboard'
+import userStore from '../stores/user';
 
 
 const NavigationItem = ({ text, to, navigate, isActive, onClick }) => {
@@ -29,25 +32,38 @@ const Auth = ({ children }) => {
     }
 }
 
+
+const ROLE_ADMIN = 2;
+const ROLE_MERCHANT = 1;
+
 const Layout = ({ children }) => {
     const location = useLocation();
+    const { id, role, username, avatar } = userStore();
+    console.log(role)
+    const logout = userStore(state => state.logout);
     const navigate = useNavigate();
     const [curUrl, setCurUrl] = useState("/");
     const handleChangeRoute = (url) => {
         setCurUrl(url);
     }
-    const routes = [
-        { path: "/", text: "首页", element: <Dashboard></Dashboard> },
-        { path: "/userManage", text: "用户管理", element: <UserManage></UserManage> },
-        { path: "/merchantManage", text: "商家管理", element: <MerchantManage></MerchantManage> },
-        { path: "/promotionManage", text: "推广管理", element: <PromotionManage></PromotionManage> },
-        { path: "/merchantCommentManage", text: "商家评论管理", element: <MerchantCommentManage></MerchantCommentManage> },
-        { path: "/promotionCommentManage", text: "推广评论管理", element: <PromotionCommentManage></PromotionCommentManage> },
-        { path: "/MerchantHome", text: "商家操作台", element: <MerchantHome></MerchantHome> },
-        { path: "/MerchantDataBoard", text: "商家数据", element: <MerchantDataBoard></MerchantDataBoard> },
+    let routes = [];
+    if (role == ROLE_ADMIN) {
+        routes = [
+            // { path: "/", text: "首页", element: <Dashboard></Dashboard> },
+            { path: "/userManage", text: "用户管理", element: <UserManage></UserManage> },
+            { path: "/merchantManage", text: "商家管理", element: <MerchantManage></MerchantManage> },
+            { path: "/adminPromotionManage", text: "推广管理", element: <AdminPromotionManage></AdminPromotionManage> },
+            { path: "/merchantCommentManage", text: "商家评论管理", element: <MerchantCommentManage></MerchantCommentManage> },
+            { path: "/promotionCommentManage", text: "推广评论管理", element: <PromotionCommentManage></PromotionCommentManage> },
+        ];
+    } else if (role == ROLE_MERCHANT) {
+        routes = [
+            { path: "/promotionManage", text: "推广管理", element: <PromotionManage></PromotionManage> },
+            { path: "/promotionEdit", text: "编辑推广", element: <PromotionEdit></PromotionEdit> },
+            { path: "/merchantDataBoard", text: "商家数据", element: <MerchantDataBoard></MerchantDataBoard> },
+        ]
+    }
 
-        // { path: "/dataBoard", text: "数据可视化", element: <DataBoard></DataBoard> }
-    ];
     const urlText = () => {
         for (let i = 0; i < routes.length; i++) {
             if (routes[i].path == curUrl) {
@@ -64,9 +80,11 @@ const Layout = ({ children }) => {
     }, [location]);
 
 
-    const logout = () => {
-        console.log("登出");
+    const handleLogout = () => {
+        logout();
+        localStorage.removeItem("user");
     }
+
     return (
         <div className={`flex-1 flex-row`}>
             <div className="w-1/6 bg-primary300 flex-col">
@@ -76,9 +94,9 @@ const Layout = ({ children }) => {
                 </div>
                 <div className="flex-col h-full">
                     {routes.map((item, idx) => <NavigationItem isActive={item.path == curUrl} onClick={handleChangeRoute.bind(null, idx)} key={idx} to={item.path} navigate={navigate} text={item.text}></NavigationItem>)}
-                    <div onClick={logout} className='mt-auto h-16 text-white border-t-2 border-t-white items-center text-2xl hover:bg-primary200 justify-center'>
+                    {id != null && <div onClick={handleLogout} className='mt-auto h-16 text-white border-t-2 border-t-white items-center text-2xl hover:bg-primary200 justify-center'>
                         登出
-                    </div>
+                    </div>}
                 </div>
             </div>
             <div className="flex-1  flex-col">
@@ -86,12 +104,12 @@ const Layout = ({ children }) => {
                     <div>
                         <div className="text-xl">{urlText()}</div>
                     </div>
-                    <div className="ml-auto h-full items-center">
-                        <img src="./logo192.png" className="h-full aspect-square"></img>
-                        <div className="text-lg">覃莆任</div>
-                    </div>
+                    {id != null && <div className="ml-auto h-full items-center">
+                        <img src={avatar} className="h-full aspect-square"></img>
+                        <div className="text-lg">{username}</div>
+                    </div>}
                 </div>
-                <div className='w-full p-2 max-h-screen'>
+                <div style={{ height: "calc(100% - 77px)" }} className='w-full p-2'>
                     <Auth>
                         {useRoutes(routes)}
                     </Auth>

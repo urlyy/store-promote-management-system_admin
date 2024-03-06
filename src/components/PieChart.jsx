@@ -1,36 +1,48 @@
-import React, { useEffect, useRef } from 'react';
-import * as d3 from 'd3';
+// PieChart.js
 
-const PieChart = ({ data, width = 400, height = 400 }) => {
-    const chartRef = useRef();
+import React from 'react';
+import ReactECharts from 'echarts-for-react';
 
-    useEffect(() => {
-        // 创建饼图布局
-        const pie = d3
-            .pie()
-            .value((d) => d.value)
-            .sort(null);
+const PieChart = ({ data, className = "", title = "饼图示例", style = {} }) => {
+    // 数据处理
+    const processedData = data.map(item => ({ name: item.name, value: item.value }));
 
-        // 创建弧形生成器
-        const arc = d3.arc().innerRadius(0).outerRadius(Math.min(width, height) / 2 - 10);
+    // ECharts 配置项
+    const option = {
+        title: {
+            text: title,
+            left: 'center',
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{a} <br/>{b} : {c} ({d}%)',
+        },
+        legend: {
+            orient: 'vertical',
+            left: 'left',
+            data: processedData.map(item => item.name),
+        },
+        series: [
+            {
+                name: '用户打分情况',
+                type: 'pie',
+                radius: '55%',
+                center: ['50%', '60%'],
+                data: processedData,
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowOffsetX: 0,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)',
+                    },
+                },
+            },
+        ],
+    };
 
-        // 创建SVG容器
-        const svg = d3.select(chartRef.current).append('svg').attr('width', width).attr('height', height);
-
-        // 创建饼图组
-        const pieGroup = svg.append('g').attr('transform', `translate(${width / 2},${height / 2})`);
-
-        // 绘制扇形
-        const arcs = pieGroup.selectAll('path').data(pie(data)).enter().append('path');
-
-        arcs
-            .attr('d', arc)
-            .attr('fill', (d, i) => d3.schemeCategory10[i % 10]) // 使用D3的颜色方案
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 2);
-    }, []);
-
-    return <div ref={chartRef} />;
+    return (
+        <ReactECharts className={className} option={option} style={{ height: '400px', width: '400px', ...style }} />
+    );
 };
 
 export default PieChart;

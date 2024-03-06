@@ -30,7 +30,7 @@ td {
 }
 
 tr {
-    @apply flex flex-1
+    @apply flex w-full
 }
 
 form {

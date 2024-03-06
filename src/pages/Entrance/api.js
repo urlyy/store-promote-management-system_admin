@@ -6,7 +6,7 @@ const api = {
         formData.append("username", username);
         formData.append("password", password)
         const resp = await request.postForm("/admin/login", formData);
-        return resp.data.data;
+        return resp.data;
     },
     register: async () => {
 
